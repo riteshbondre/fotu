@@ -1,11 +1,11 @@
-import React from 'react';
-import UploadForm from './UploadForm';
+import React from "react";
+import UploadForm from "./UploadForm";
 
-const OnlineMode = () =>{
-    return(
-        <div> online mode<button><UploadForm/></button></div>
-        
-        
-    )
-}
+const OnlineMode = () => {
+  return (
+    <div>
+      <UploadForm />
+    </div>
+  );
+};
 export default OnlineMode;

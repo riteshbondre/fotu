@@ -3,7 +3,7 @@ import Title from './comps/Title';
 import ImageGrid from './comps/ImageGrid';
 import Modal from './comps/Modal';
 import OnlineMode from './comps/onlineModeButton';
-import UploadForm from './comps/offlineUpload';
+import OfflineMode from './comps/offlineModeButton';
 
 function App() {
   const [selectedImg, setSelectedImg] = useState(null);
@@ -12,9 +12,10 @@ function App() {
     <div className="App">
       <Title/>
       <div><OnlineMode/></div>
-      <UploadForm/>
+      
       <h2>Online Mode</h2>
       <ImageGrid setSelectedImg={setSelectedImg} />
+      <div><OfflineMode/></div>
       { selectedImg && (
         <Modal selectedImg={selectedImg} setSelectedImg={setSelectedImg} />
       )}

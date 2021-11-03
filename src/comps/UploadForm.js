@@ -21,6 +21,7 @@ const UploadForm = () => {
 
   return (
     <form>
+      <h3>online mode</h3>
       <label>
         <input type="file" onChange={onImageUpload} />
         <span>+</span>

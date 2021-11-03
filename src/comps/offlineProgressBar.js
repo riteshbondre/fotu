@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
-import useStorage from '../hooks/useStorage';
+import useOfflineStorage from '../hooks/useOfflineStorage';
 import { motion } from 'framer-motion';
 
-const OffProgressBar = ({ img, setImg }) => {
-  const { progress, url } = useStorage(img);
-  console.log(progress,url)
+const OfflineProgressBar = ({ file, setFile }) => {
+
+  const { progress, url } = useOfflineStorage(file);
+  console.log(file)
   useEffect(() => {
     if (url) {
-      setimg(null);
+      setFile(null);
     }
   }, [url, setFile]);
 
@@ -19,4 +20,4 @@ const OffProgressBar = ({ img, setImg }) => {
   );
 } 
 
-export default OffProgressBar;
+export default OfflineProgressBar;
