@@ -1,15 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {collection , addDoc} from 'firebase/firestore';
-import { projectStorage, projectFirestore, timestamp } from '../firebase/config';
-const OfflineUploadForm = () => {
+import { base64StringToBlob } from "blob-util";
+import { collection, addDoc } from "firebase/firestore";
+import {
+  projectStorage,
+  projectFirestore,
+  timestamp,
+} from "../firebase/config";
+const OfflineUploadForm = ({ setSelectedImg,finalImg, setFinalImg ,setUrl}) => {
   const [file, setFile] = useState(null);
+
   const [error, setError] = useState(null);
   const [img, setImg] = useState();
-  const [finalImg, setFinalImg] = useState('');
-  const [offImg, setOffImg]=useState([])
+  
+  const [progress, setProgress] = useState(0);
+
   const types = ["image/png", "image/jpeg"];
-  const offlineStorage = projectFirestore.collection('offlineimages')
+  const offlineStorage = projectFirestore.collection("images");
+  const storageRef = projectStorage.ref("blob" + Math.floor(Date.now() / 1000));
   React.useEffect(() => {
     const storedImg = localStorage.getItem("storedImg")
       ? JSON.parse(localStorage.getItem("storedImg"))
@@ -22,24 +30,90 @@ const OfflineUploadForm = () => {
 
     setFinalImg(storedImg);
   }, [img]);
+  console.log(finalImg)
+  var connected = navigator.onLine;
+ 
+  const handleConnectionChange = async (event) => {
+    // if (event.type == "offline") {
+    //   console.log("You lost connection.");
+    // }
+    if (event.type == "online") {
+      console.log("You are now back online.");
+      
+      for (var index = 0; index < finalImg.length; index++) {
+        const trimmedBaseString = finalImg[index].split(",").pop();
 
+        blob = base64StringToBlob(trimmedBaseString, "image/jpeg");
+        console.log(blob);
+        
+        if (blob == null) return;
+        storageRef.put(blob).then(
+          // "state_changed",
+          (snap) => {
+            //   let percentage = (snap.bytesTransferred / snap.totalBytes) * 100;
+            //   setProgress(percentage);
+            //   console.log(percentage);
+            // },
+            // (err) => {
+            //   setError(err);
+            // },
+            // async () => {
+            storageRef.getDownloadURL().then((url) => {
+              const createdAt = timestamp();
+              offlineStorage.add({ url, createdAt });
+              setUrl(url);
+            });
+          }
+        );
+      }
+      localStorage.removeItem("storedImg");
+    }
+
+    console.log(new Date(event.timeStamp));
+  };
+  window.removeEventListener("online", handleConnectionChange);
+  window.addEventListener("online", handleConnectionChange);
   // console.log("img", img);
   const onImageUpload = async (e) => {
     const selected = e.target.files[0];
     const base64 = await convertBase64(selected);
     setImg(base64);
   };
-  var storeImage = {}
-  const onUpload = async (e)=>{
-    e.preventDefault();
-    for (var index = 0; index < finalImg.length; index++) {
-      console.log(finalImg[index]);
-      
-       
-  }
-  await projectFirestore.addDoc(offlineStorage,{offImg:finalImg[index]})
-  }
-  
+
+  var blob = {};
+
+
+  // const onUpload = async (e) => {
+  //   e.preventDefault();
+  //     for (var index = 0; index < finalImg.length; index++) {
+  //       const trimmedBaseString = finalImg[index].split(",").pop();
+
+  //       blob = base64StringToBlob(trimmedBaseString, "image/jpeg");
+  //       console.log(blob);
+        
+  //       if (blob == null) return;
+  //       storageRef.put(blob).then(
+  //         // "state_changed",
+  //         (snap) => {
+  //           //   let percentage = (snap.bytesTransferred / snap.totalBytes) * 100;
+  //           //   setProgress(percentage);
+  //           //   console.log(percentage);
+  //           // },
+  //           // (err) => {
+  //           //   setError(err);
+  //           // },
+  //           // async () => {
+  //           storageRef.getDownloadURL().then((url) => {
+  //             const createdAt = timestamp();
+  //             offlineStorage.add({ url, createdAt });
+  //             setUrl(url);
+  //           });
+  //         }
+  //       );
+  //     }
+  //     localStorage.removeItem("storedImg");
+  //   // await projectFirestore.addDoc(offlineStorage,{offImg:finalImg[index]})
+  // };
 
   const convertBase64 = (selected) => {
     return new Promise((resolve, reject) => {
@@ -56,52 +130,44 @@ const OfflineUploadForm = () => {
     });
   };
 
-  // var ConvertedImage = new Image();
-  // ConvertedImage.src = finalImg[0];
-  // document.body.appendChild(ConvertedImage);
 
-  return (<div>
-   
-    <form>
-      <h3>offline mode</h3>
-      <label>
-        <input type="file" onChange={onImageUpload} />
-        <span>+</span>
-      </label>
-      <button onClick={onUpload}>upload</button>
-      <div className="output">
-        {error && <div className="error">{error}</div>}
-        {file && <div>{file.name}</div>}
-        {/* {file && <OfflineProgressBar file={finalImg} setFile={setFinalImg} />} */}
 
-        <div>
-          <div className="img-grid">
-            {finalImg &&
-              finalImg.map((data) => (
-                <motion.div
-                  className="img-wrap"
-                  layout
-                  whileHover={{ opacity: 1 }}
-                  onClick={(e) => e.target.value}
-                >
-                  <motion.img
-                    src={data}
-                    alt="uploaded pic"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
-                  />
-                </motion.div>
-              ))}
+  return (
+    <div>
+      <form>
+        <label>
+          <input type="file" onChange={onImageUpload} />
+          <span>+</span>
+        </label>
+        {/* <button onClick={onUpload}>upload</button> */}
+        <div className="output">
+          {error && <div className="error">{error}</div>}
+          {file && <div>{file.name}</div>}
+          {/* {file && <OfflineProgressBar file={finalImg} setFile={setFinalImg} />} */}
+
+          <div>
+            <div className="img-grid">
+              {finalImg &&
+                finalImg.map((data) => (
+                  <motion.div
+                    className="img-wrap"
+                    layout
+                    whileHover={{ opacity: 1 }}
+                    onClick={() => setSelectedImg(data)}
+                  >
+                    <motion.img
+                      src={data}
+                      alt="uploaded pic"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1 }}
+                    />
+                  </motion.div>
+                ))}
+            </div>
           </div>
         </div>
-        {/* <img src={ConvertedImage}/> */}
-
-        {/* {finalImg.map(({finalImg, index}) => (
-      <img key={index} src={finalImg}/>
-    ))} */}
-      </div>
-    </form>
+      </form>
     </div>
   );
 };
